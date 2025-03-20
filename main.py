@@ -89,7 +89,6 @@ processed_test = dataset["test"].map(
     remove_columns=["ner_tags"],
     desc="Tokenizing test dataset",
 )
-test_dataset = processed_test['test']
 
 model = AutoModelForTokenClassification.from_pretrained(MODEL_NAME, config=config)
 
@@ -177,7 +176,7 @@ def predict_and_align(example, model, tokenizer, label_list, device):
 
 # Now, iterate over all test examples to get predictions.
 test_predictions = []
-for example in test_dataset:
+for example in processed_test:
     pred_labels = predict_and_align(example, model, tokenizer, label_list, device)
     test_predictions.append({
         "tokens": example["tokens"],
@@ -192,6 +191,6 @@ with open("predictions.iob2", "w") as f:
         tokens = item["tokens"]
         labels = item["predicted_labels"]
         for token, label in zip(tokens, labels):
-            f.write(f"{token} {label}\n")
+            f.write(f"{token}\t{label}\n")
         f.write("\n")
 
