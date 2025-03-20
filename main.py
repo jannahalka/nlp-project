@@ -83,7 +83,13 @@ processed_raw_datasets = dataset.map(
 
 train_dataset = processed_raw_datasets["train"]
 eval_dataset = processed_raw_datasets["validation"]
-test_dataset = processed_raw_datasets['test']
+processed_test = dataset["test"].map(
+    tokenize_and_align_labels,
+    batched=True,
+    remove_columns=["ner_tags"],
+    desc="Tokenizing test dataset",
+)
+test_dataset = processed_test['test']
 
 model = AutoModelForTokenClassification.from_pretrained(MODEL_NAME, config=config)
 
