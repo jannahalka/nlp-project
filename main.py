@@ -83,6 +83,12 @@ processed_raw_datasets = dataset.map(
 
 train_dataset = processed_raw_datasets["train"]
 eval_dataset = processed_raw_datasets["validation"]
+processed_test = dataset["test"].map(
+    tokenize_and_align_labels,
+    batched=True,
+    remove_columns=["ner_tags"],
+    desc="Tokenizing test dataset",
+)
 
 model = AutoModelForTokenClassification.from_pretrained(MODEL_NAME, config=config)
 
@@ -128,4 +134,63 @@ for epoch in range(EPOCHS):
             print("  batch {} loss: {}".format(step + 1, last_loss))
             running_loss = 0.0
 
-torch.save(model.state_dict(), "model.pt")
+# Assuming you have a `test_dataset` similar to your train and dev datasets.
+# For example, you might have:
+# test_dataset = processed_raw_datasets["test"]
+
+def predict_and_align(example, model, tokenizer, label_list, device):
+    # Tokenize the example (a dict with "tokens") and get tensor inputs.
+    tokenized_example = tokenizer(
+        example["tokens"],
+        max_length=128,
+        padding="max_length",
+        truncation=True,
+        is_split_into_words=True,
+        return_tensors="pt"
+    )
+
+    # Get the word_ids to map predictions back to tokens.
+    # Note: word_ids is a list with the same length as the tokenized inputs.
+    word_ids = tokenized_example.word_ids(batch_index=0)
+
+    # Move inputs to device
+    tokenized_example = {k: v.to(device) for k, v in tokenized_example.items()}
+
+    # Get model predictions (logits) and convert to label indices
+    model.eval()
+    with torch.no_grad():
+        outputs = model(**tokenized_example)
+    logits = outputs.logits  # shape: [1, seq_len, num_labels]
+    predictions = torch.argmax(logits, dim=-1)[0].tolist()  # for one example
+
+    # Align predictions: Only keep the prediction for the first subword of each token.
+    aligned_predictions = []
+    previous_word_idx = None
+    for word_idx, pred in zip(word_ids, predictions):
+        if word_idx is None:
+            continue  # skip special tokens
+        if word_idx != previous_word_idx:
+            aligned_predictions.append(label_list[pred])
+            previous_word_idx = word_idx
+    return aligned_predictions
+
+# Now, iterate over all test examples to get predictions.
+test_predictions = []
+for example in processed_test:
+    pred_labels = predict_and_align(example, model, tokenizer, label_list, device)
+    test_predictions.append({
+        "tokens": example["tokens"],
+        "predicted_labels": pred_labels
+    })
+
+# Write predictions to an output file in IOB2 format.
+# Each line will have the token and its predicted label separated by a space,
+# and sentences are separated by a blank line.
+with open("predictions.iob2", "w") as f:
+    for item in test_predictions:
+        tokens = item["tokens"]
+        labels = item["predicted_labels"]
+        for token, label in zip(tokens, labels):
+            f.write(f"{token}\t{label}\n")
+        f.write("\n")
+

@@ -61,3 +61,5 @@ dataset = DatasetDict({
     "validation": dev,
     "test": test
 })
+
+print(dataset)
