@@ -113,6 +113,7 @@ for epoch in range(EPOCHS):
     )
 
     for step, batch in pbar:  # Iterate over batches of data
+        batch = {k: v.to(device) for k, v in batch.items()}
         optimizer.zero_grad()  # Clear gradients from the previous iteration
 
         outputs = model(**batch)  # Forward pass through the model
@@ -126,3 +127,5 @@ for epoch in range(EPOCHS):
             last_loss = running_loss / 1000  # loss per batch
             print("  batch {} loss: {}".format(step + 1, last_loss))
             running_loss = 0.0
+
+torch.save(model.state_dict(), "model.pt")
