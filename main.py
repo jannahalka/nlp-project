@@ -8,7 +8,6 @@ from transformers import (
 from torch.utils.data import DataLoader
 import torch
 from tqdm import tqdm
-from data import dataset
 
 
 MODEL_NAME = "google-bert/bert-base-cased"
