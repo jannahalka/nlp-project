@@ -137,6 +137,7 @@ for epoch in range(EPOCHS):
 # For example, you might have:
 # test_dataset = processed_raw_datasets["test"]
 
+
 def predict_and_align(example, model, tokenizer, label_list, device):
     # Tokenize the example (a dict with "tokens") and get tensor inputs.
     tokenized_example = tokenizer(
@@ -145,7 +146,7 @@ def predict_and_align(example, model, tokenizer, label_list, device):
         padding="max_length",
         truncation=True,
         is_split_into_words=True,
-        return_tensors="pt"
+        return_tensors="pt",
     )
 
     # Get the word_ids to map predictions back to tokens.
@@ -173,14 +174,14 @@ def predict_and_align(example, model, tokenizer, label_list, device):
             previous_word_idx = word_idx
     return aligned_predictions
 
+
 # Now, iterate over all test examples to get predictions.
 test_predictions = []
 for example in processed_test:
     pred_labels = predict_and_align(example, model, tokenizer, label_list, device)
-    test_predictions.append({
-        "tokens": example["tokens"],
-        "predicted_labels": pred_labels
-    })
+    test_predictions.append(
+        {"tokens": example["tokens"], "predicted_labels": pred_labels}
+    )
 
 # Write predictions to an output file in IOB2 format.
 # Each line will have the token and its predicted label separated by a space,
@@ -192,4 +193,3 @@ with open("predictions.iob2", "w") as f:
         for token, label in zip(tokens, labels):
             f.write(f"{token}\t{label}\n")
         f.write("\n")
-
