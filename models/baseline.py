@@ -121,5 +121,4 @@ for epoch in range(EPOCHS):
             print("  batch {} loss: {}".format(step + 1, last_loss))
             running_loss = 0.0
 
-model.push_to_hub("jannahalka/nlp-project-baseline")
 
