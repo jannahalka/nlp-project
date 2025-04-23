@@ -122,3 +122,5 @@ for epoch in range(EPOCHS):
             running_loss = 0.0
 
 
+model.save_pretrained("models/baseline")
+tokenizer.save_pretrained("models/baseline")
