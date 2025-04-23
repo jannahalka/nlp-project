@@ -14,43 +14,36 @@ from tqdm import tqdm
 MODEL_NAME = "google-bert/bert-base-cased"
 LR = 2e-5
 EPOCHS = 3
-LABEL_COLUMN_NAME = "label"
+LABEL_COLUMN_NAME = "labels"
 
-data_files = {
-    "train": "data/baseline/train.csv",
-    "dev": "data/baseline/dev.csv",
-    "test": "data/baseline/test.csv",
-}
-
-dataset = load_dataset("csv", data_files=data_files)
+dataset = load_dataset("jannahalka/nlp-project-data", trust_remote_code=True)
 
 if type(dataset) != DatasetDict:
     raise Exception()
 
-label_list = dataset["train"].unique(LABEL_COLUMN_NAME)
+label_list = dataset["train"].features["labels"].feature.names
 
-tok = AutoTokenizer.from_pretrained(MODEL_NAME, use_fast=True)
+tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, use_fast=True)
 config = AutoConfig.from_pretrained(MODEL_NAME, num_labels=len(label_list))
-model = AutoModelForTokenClassification.from_pretrained(MODEL_NAME, config=config)
 
 
-def tokenize(example):
-    tokenized = tok(
-        example["token"],
+# Preprocessing
+def tokenize(examples):
+    tokenized_inputs = tokenizer(
+        examples["tokens"],
         max_length=128,
         padding=False,
         truncation=True,
         is_split_into_words=True,
     )
 
-    # 2) Prepare a new "labels" list aligned to the subword tokens
     all_labels = []
 
     # examples[label_column_name] might look like: [0, 0, 1, 2, ...] for each token
-    for batch_index, labels in enumerate(example[LABEL_COLUMN_NAME]):
+    for batch_index, labels in enumerate(examples[LABEL_COLUMN_NAME]):
         # 'word_ids()' returns a list the same length as the subword-tokens,
         # each entry telling you which 'word' or token it came from
-        word_ids = tokenized.word_ids(batch_index=batch_index)
+        word_ids = tokenized_inputs.word_ids(batch_index=batch_index)
 
         label_ids = []
         prev_word_id = None
@@ -69,24 +62,26 @@ def tokenize(example):
             prev_word_id = word_id
 
         all_labels.append(label_ids)
-        tokenized["labels"] = all_labels
 
-        # 4) Return the updated dictionary
-        return tokenized
+    tokenized_inputs["labels"] = all_labels
+
+    # 4) Return the updated dictionary
+    return tokenized_inputs
 
 
-dataset = dataset.map(tokenize, batched=True, desc="Running tokenizer on dataset")
-
-train_dataset, dev_dataset = dataset["train"], dataset["dev"]
-
-test_dataset = dataset["test"].map(
+dataset = dataset.map(
     tokenize,
     batched=True,
-    remove_columns=["label"],
-    desc="Tokenizing test dataset",
+    remove_columns=dataset["train"].column_names, # Remove un-tokenized data
+    desc="Running tokenizer on dataset",
 )
 
+train_dataset = dataset["train"]
+
+model = AutoModelForTokenClassification.from_pretrained(MODEL_NAME, config=config)
+
 data_collator = DataCollatorForTokenClassification(tokenizer)
+
 train_dataloader = DataLoader(
     train_dataset, shuffle=True, collate_fn=data_collator, batch_size=8
 )
@@ -125,3 +120,6 @@ for epoch in range(EPOCHS):
             last_loss = running_loss / 1000  # loss per batch
             print("  batch {} loss: {}".format(step + 1, last_loss))
             running_loss = 0.0
+
+model.push_to_hub("jannahalka/nlp-project-baseline")
+

@@ -1,51 +1,64 @@
 from pathlib import Path
-import csv
-from datasets import load_dataset, Dataset
+import json
+
+from datasets import load_dataset, Features, Sequence, ClassLabel, Value
 
 path = "data/baseline/en_ewt-ud-train.iob2"
+
+labels = set()
 
 
 def read_conll(path: str):
     """
     returns (N,2) matrix, where N = number of words in a conll file
     """
-    data = []
+    data = {"tokens": [], "labels": []}
+    temp = [[], []]
 
     for line in Path(path).read_text(encoding="utf-8").splitlines():
-        if line.startswith("#") or not line:  # Ignore bs
+        if line.startswith("#"):
             continue
 
-        data.append(line.split("\t")[1:3])
+        if not line:
+            data["tokens"].append(temp[0])
+            data["labels"].append(temp[1])
+            temp = [[], []]
+            continue
+
+        valid = line.split("\t")[1:3]
+        temp[0].append(valid[0])
+        temp[1].append(valid[1])
+        labels.add(valid[1])
 
     return data
 
 
-def write_conll_to_csv(io2_file_path: str, output_path: str):
-    """
-    Util function for translating io2 files to csv
-    """
+def convert_io2_to_json(io2_path, output_path):
+    data = read_conll(io2_path)
+    data_json = json.dumps(data, indent=2)
 
-    data = read_conll(io2_file_path)
-    with open(output_path, "w", newline="") as csvfile:
-        fieldnames = ["token", "label"]
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
-        writer.writerows([{"token": i[0], "label": i[1]} for i in data])
+    with open(output_path, "w") as f:
+        f.write(data_json)
 
 
-paths = [
-    {"path": "data/baseline/en_ewt-ud-train.iob2", "label": "train"},
-    {"path": "data/baseline/en_ewt-ud-dev.iob2", "label": "dev"},
-    {"path": "data/baseline/en_ewt-ud-test-masked.iob2", "label": "test"},
-]
+convert_io2_to_json("data/baseline/en_ewt-ud-train.iob2", "data/baseline/train.json")
+convert_io2_to_json("data/baseline/en_ewt-ud-dev.iob2", "data/baseline/dev.json")
+convert_io2_to_json(
+    "data/baseline/en_ewt-ud-test-masked.iob2", "data/baseline/test.json"
+)
 
-for obj in paths:
-    write_conll_to_csv(obj["path"], f"data/baseline/{obj["label"]}.csv")
-
-data = {
-    "train": "data/baseline/train.csv",
-    "dev": "data/baseline/dev.csv",
-    "test": "data/baseline/test.csv",
+data_files = {
+    "train": "data/baseline/train.json",
+    "dev": "data/baseline/dev.json",
+    "test": "data/baseline/test.json",
 }
 
-dataset = load_dataset("csv", data_files=data)
+features = Features(
+    {
+        "tokens": Sequence(feature=Value("string")),
+        "labels": Sequence(feature=ClassLabel(names=list(labels))),
+    }
+)
+
+dataset = load_dataset("json", data_files=data_files, features=features)
+dataset.push_to_hub("jannahalka/nlp-project-data", private=True)
