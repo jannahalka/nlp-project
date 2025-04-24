@@ -1,0 +1,31 @@
+Bootstrap: docker
+From: python:3.12.3-slim
+
+%labels
+    Author YourName
+    Version v1.0
+
+%environment
+    # ensure non-interactive installs
+    export DEBIAN_FRONTEND=noninteractive
+    export HUGGINGFACE_HUB_TOKEN=
+
+%post
+    # Install OS deps (if needed)
+    apt-get update && apt-get install -y --no-install-recommends \
+        build-essential git && \
+    rm -rf /var/lib/apt/lists/*
+
+    # Upgrade pip & install Python deps
+    pip install --upgrade pip setuptools wheel
+    # Copy in your requirements.txt
+    mkdir /opt/app
+    cp /mnt/host/requirements.txt /opt/app/
+    pip install --no-cache-dir -r /opt/app/requirements.txt
+
+    # Copy your code into the image
+    cp -r /mnt/host/models /opt/app/
+
+%workdir /opt/app
+%runscript
+    exec python models/baseline.py "$@"
