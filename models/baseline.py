@@ -15,6 +15,7 @@ MODEL_NAME = "google-bert/bert-base-cased"
 LR = 2e-5
 EPOCHS = 3
 LABEL_COLUMN_NAME = "labels"
+BATCH_SIZE = 8
 
 dataset = load_dataset("jannahalka/nlp-project-data", trust_remote_code=True)
 
@@ -72,7 +73,7 @@ def tokenize(examples):
 dataset = dataset.map(
     tokenize,
     batched=True,
-    remove_columns=dataset["train"].column_names, # Remove un-tokenized data
+    remove_columns=dataset["train"].column_names,  # Remove un-tokenized data
     desc="Running tokenizer on dataset",
 )
 
@@ -83,7 +84,7 @@ model = AutoModelForTokenClassification.from_pretrained(MODEL_NAME, config=confi
 data_collator = DataCollatorForTokenClassification(tokenizer)
 
 train_dataloader = DataLoader(
-    train_dataset, shuffle=True, collate_fn=data_collator, batch_size=8
+    train_dataset, shuffle=True, collate_fn=data_collator, batch_size=BATCH_SIZE
 )
 
 # Move model to device (CPU/GPU)
@@ -92,35 +93,34 @@ model.to(device)
 
 # Create optimizer (e.g. AdamW)
 optimizer = torch.optim.AdamW(model.parameters(), lr=LR)
-loss_fn = torch.nn.CrossEntropyLoss()
 
-running_loss = 0.0
-last_loss = 0.0
-
-for epoch in range(EPOCHS):
-    model.train(True)
-    pbar = tqdm(
-        enumerate(train_dataloader),
-        total=len(train_dataloader),
-        desc=f"Training Epoch {epoch+1}",
+def train_loop(model, train_loader, epoch):
+    size = len(train_loader.dataset)
+    model.train()
+    data = tqdm(
+        enumerate(train_loader),
+        total=len(train_loader),
+        desc=f"Training Epoch {epoch + 1}",
     )
 
-    for step, batch in pbar:  # Iterate over batches of data
+    for step, batch in data:
         batch = {k: v.to(device) for k, v in batch.items()}
-        optimizer.zero_grad()  # Clear gradients from the previous iteration
 
-        outputs = model(**batch)  # Forward pass through the model
+        outputs = model(**batch)
         loss = outputs.loss
-        loss.backward()  # Compute gradients (backpropagation)
-        optimizer.step()  # Update model parameters
 
-        running_loss += loss.item()
+        # Backpropagation
+        loss.backward()
+        optimizer.step()
+        optimizer.zero_grad()
 
-        if step % 1000 == 999:
-            last_loss = running_loss / 1000  # loss per batch
-            print("  batch {} loss: {}".format(step + 1, last_loss))
-            running_loss = 0.0
+        if step % 100 == 0:
+            loss, current = loss.item(), step * BATCH_SIZE + len(batch)
+            print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
 
+
+for epoch in range(EPOCHS):
+    train_loop(model, train_dataloader, epoch)
 
 model.save_pretrained("models/baseline")
 tokenizer.save_pretrained("models/baseline")
