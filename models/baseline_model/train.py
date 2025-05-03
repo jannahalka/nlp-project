@@ -97,7 +97,13 @@ model.to(device)
 optimizer = torch.optim.AdamW(model.parameters(), lr=LR)
 
 
-def train_loop(model, epoch, train_loader):  # TODO: Refactor
+def show_loss(loss, step, batch, size):
+    if step % 100 == 0:
+        loss, current = loss.item(), step * BATCH_SIZE + len(batch)
+        print(f"Loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
+
+
+def train_loop(model, epoch, train_loader):
     size = len(train_loader.dataset)
 
     model.train()
@@ -118,10 +124,7 @@ def train_loop(model, epoch, train_loader):  # TODO: Refactor
         optimizer.step()
         optimizer.zero_grad()
 
-        # TODO: Refactor below (def show_loss())
-        if step % 100 == 0:
-            loss, current = loss.item(), step * BATCH_SIZE + len(batch)
-            print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
+        show_loss(loss, step, batch, size)
 
 
 for epoch in range(EPOCHS):
