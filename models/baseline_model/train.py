@@ -11,10 +11,10 @@ import torch
 from tqdm import tqdm
 from transformers.tokenization_utils_base import BatchEncoding
 
-MODEL_NAME = "google-bert/bert-base-cased"
+MODEL = "google-bert/bert-base-cased"
 LR = 2e-5
 EPOCHS = 3
-LABEL_COLUMN_NAME = "labels"
+LABEL_COLUMN = "labels"
 BATCH_SIZE = 8
 IGNORE_LABEL = -100
 
@@ -33,11 +33,9 @@ train, dev, test = dataset.values()
 
 labels: list[str] = train.features["labels"].feature.names
 
-tokenizer: PreTrainedTokenizerFast = AutoTokenizer.from_pretrained(
-    MODEL_NAME, use_fast=True
-)
-config = AutoConfig.from_pretrained(MODEL_NAME, num_labels=len(labels))
-model = AutoModelForTokenClassification.from_pretrained(MODEL_NAME, config=config)
+tokenizer: PreTrainedTokenizerFast = AutoTokenizer.from_pretrained(MODEL, use_fast=True)
+config = AutoConfig.from_pretrained(MODEL, num_labels=len(labels))
+model = AutoModelForTokenClassification.from_pretrained(MODEL, config=config)
 
 
 def create_labels_mask(word_ids: list[int | None], original_labels):
@@ -58,7 +56,7 @@ def create_labels_mask(word_ids: list[int | None], original_labels):
 def align_batch_labels(examples, tokenized_inputs: BatchEncoding):
     masked_labels = []
 
-    for batch_index, original_labels in enumerate(examples[LABEL_COLUMN_NAME]):
+    for batch_index, original_labels in enumerate(examples[LABEL_COLUMN]):
         word_ids = tokenized_inputs.word_ids(batch_index=batch_index)
         masked_labels = create_labels_mask(word_ids, original_labels)
         masked_labels.append(masked_labels)
@@ -83,8 +81,10 @@ dataset = dataset.map(
     tokenize,
     batched=True,
     remove_columns=train.column_names,  # Remove un-tokenized data
-    desc="Running tokenizer on dataset",
+    desc="Running tokenizer on the dataset",
 )
+
+train, dev, test = dataset.values()
 
 data_collator = DataCollatorForTokenClassification(tokenizer)
 
@@ -97,7 +97,7 @@ model.to(device)
 optimizer = torch.optim.AdamW(model.parameters(), lr=LR)
 
 
-def train_loop(model, epoch, train_loader):
+def train_loop(model, epoch, train_loader):  # TODO: Refactor
     size = len(train_loader.dataset)
 
     model.train()
@@ -111,14 +111,14 @@ def train_loop(model, epoch, train_loader):
     for step, batch in train_loader:
         batch = {k: v.to(device) for k, v in batch.items()}
 
-        outputs = model(**batch)
-        loss = outputs.loss
+        output = model(**batch)
+        loss = output.loss
 
-        # Backpropagation
         loss.backward()
         optimizer.step()
         optimizer.zero_grad()
 
+        # TODO: Refactor below (def show_loss())
         if step % 100 == 0:
             loss, current = loss.item(), step * BATCH_SIZE + len(batch)
             print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
@@ -127,5 +127,11 @@ def train_loop(model, epoch, train_loader):
 for epoch in range(EPOCHS):
     train_loop(model, train_dataloader, epoch)
 
-model.save_pretrained("models/baseline")
-tokenizer.save_pretrained("models/baseline")
+
+# TODO: Figure out `model` type
+def save_model(model, tokenizer: PreTrainedTokenizerFast, output_path: str):
+    model.save_pretrained(output_path)
+    tokenizer.save_pretrained(output_path)
+
+
+save_model(model, tokenizer, "./models/baseline_model/output")
