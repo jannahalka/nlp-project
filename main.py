@@ -1,4 +1,3 @@
-from datasets import Dataset
 from transformers import (
     AutoModelForTokenClassification,
     AutoConfig,
