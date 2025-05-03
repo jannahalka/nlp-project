@@ -115,7 +115,7 @@ def train_loop(model, epoch, train_loader):
     )
 
     for step, batch in train_loader:
-        batch = {k: v.to(device) for k, v in batch.items()}
+        batch = {key: value.to(device) for key, value in batch.items()}
 
         output = model(**batch)
         loss = output.loss
