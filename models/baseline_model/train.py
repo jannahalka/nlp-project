@@ -11,6 +11,7 @@ from tqdm import tqdm
 
 EPOCHS = 3
 
+
 def get_dataset():
     dataset = load_dataset("jannahalka/nlp-project-data", trust_remote_code=True)
 
@@ -104,7 +105,7 @@ class BaselineModelTrainer:
     def align_labels(self, examples, tokenized_inputs):
         labels = []
 
-        for batch_index, original_labels in enumerate(examples[LABEL_COLUMN]):
+        for batch_index, original_labels in enumerate(examples["labels"]):
             word_ids = tokenized_inputs.word_ids(batch_index=batch_index)
             masked_labels = self.create_labels_mask(word_ids, original_labels)
             labels.append(masked_labels)
@@ -129,8 +130,6 @@ class BaselineModelTrainer:
     def save(self, path: str):
         self.model.save_pretrained(path)
         self.tokenizer.save_pretrained(path)
-
-
 
 
 dataset = get_dataset()
