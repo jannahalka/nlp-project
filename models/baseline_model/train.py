@@ -46,8 +46,8 @@ def create_labels_mask(word_ids: list[int | None], original_labels):
         if word_id is None or word_id == prev_word_id:
             masked.append(IGNORE_LABEL)
         else:
-            label = original_labels[word_id]  # Original label of a subword
-            masked.append(label)  # New subword, use original label
+            label = original_labels[word_id]
+            masked.append(label)
 
         prev_word_id = word_id
     return masked
@@ -80,7 +80,7 @@ def tokenize(examples):  # TODO: Fix the type of `examples`
 dataset = dataset.map(
     tokenize,
     batched=True,
-    remove_columns=train.column_names,  # Remove un-tokenized data
+    remove_columns=train.column_names,
     desc="Running tokenizer on the dataset",
 )
 
@@ -97,12 +97,14 @@ model.to(device)
 optimizer = torch.optim.AdamW(model.parameters(), lr=LR)
 
 
+# TODO: Refactor -> Too many arguments
 def show_loss(loss, step, batch, size):
     if step % 100 == 0:
         loss, current = loss.item(), step * BATCH_SIZE + len(batch)
         print(f"Loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
 
 
+# TODO: Refactor -> Too many arguments
 def train_loop(model, epoch, train_loader):
     size = len(train_loader.dataset)
 
@@ -131,7 +133,7 @@ for epoch in range(EPOCHS):
     train_loop(model, train_dataloader, epoch)
 
 
-# TODO: Figure out `model` type
+# TODO: Figure out `model` type, Too many arguments
 def save_model(model, tokenizer: PreTrainedTokenizerFast, output_path: str):
     model.save_pretrained(output_path)
     tokenizer.save_pretrained(output_path)
