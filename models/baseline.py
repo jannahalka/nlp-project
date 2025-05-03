@@ -39,18 +39,17 @@ tokenizer: PreTrainedTokenizerFast = AutoTokenizer.from_pretrained(
 config = AutoConfig.from_pretrained(MODEL_NAME, num_labels=len(labels))
 model = AutoModelForTokenClassification.from_pretrained(MODEL_NAME, config=config)
 
+
 def create_labels_mask(word_ids: list[int | None], original_labels):
     masked = []
     prev_word_id: int | None = None
 
     for word_id in word_ids:
-        label = original_labels[word_id]  # Original label of a subword
-
         if word_id is None or word_id == prev_word_id:
             masked.append(IGNORE_LABEL)
         else:
-            # New subword, use original label
-            masked.append(label)
+            label = original_labels[word_id]  # Original label of a subword
+            masked.append(label)  # New subword, use original label
 
         prev_word_id = word_id
     return masked
@@ -61,9 +60,7 @@ def align_batch_labels(examples, tokenized_inputs: BatchEncoding):
 
     for batch_index, original_labels in enumerate(examples[LABEL_COLUMN_NAME]):
         word_ids = tokenized_inputs.word_ids(batch_index=batch_index)
-
         masked_labels = create_labels_mask(word_ids, original_labels)
-
         masked_labels.append(masked_labels)
 
     return masked_labels
@@ -100,16 +97,18 @@ model.to(device)
 optimizer = torch.optim.AdamW(model.parameters(), lr=LR)
 
 
-def train_loop(model, train_loader, epoch):
+def train_loop(model, epoch, train_loader):
     size = len(train_loader.dataset)
+
     model.train()
-    data = tqdm(
+
+    train_loader = tqdm(
         enumerate(train_loader),
         total=len(train_loader),
         desc=f"Training Epoch {epoch + 1}",
     )
 
-    for step, batch in data:
+    for step, batch in train_loader:
         batch = {k: v.to(device) for k, v in batch.items()}
 
         outputs = model(**batch)
