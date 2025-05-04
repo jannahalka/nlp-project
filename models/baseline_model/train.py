@@ -9,7 +9,6 @@ from torch.utils.data import DataLoader
 import torch
 from tqdm import tqdm
 
-EPOCHS = 3
 
 
 def get_dataset():
@@ -28,8 +27,10 @@ class BaselineModelTrainer:
         model_name="google-bert/bert-base-cased",
         learning_rate=2e-5,
         batch_size=8,
+        epochs=3
     ):
         self.batch_size = batch_size
+        self.epochs = epochs
 
         train, dev, test = dataset.values()
         self.train_dataset, self.dev_dataset, self.test_dataset = train, dev, test
@@ -50,22 +51,23 @@ class BaselineModelTrainer:
 
         self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=learning_rate)
 
-    def train(self, epochs: int):
+    def train(self):
         self.prepare_data()
 
-        for epoch in range(epochs):
+        for epoch in range(self.epochs):
             self.train_epoch(epoch)
+            # TODO: self.test_epoch()
 
     def train_epoch(self, epoch: int):
         self.model.train()
 
         train_loader = tqdm(
-            enumerate(self.train_loader),
+            self.train_loader,
             total=len(self.train_loader),
             desc=f"Training Epoch {epoch + 1}",
         )
 
-        for step, batch in train_loader:
+        for batch in train_loader:
             batch = {key: value.to(self.device) for key, value in batch.items()}
 
             output = self.model(**batch)
@@ -131,9 +133,8 @@ class BaselineModelTrainer:
         self.model.save_pretrained(path)
         self.tokenizer.save_pretrained(path)
 
-
 dataset = get_dataset()
 
 trainer = BaselineModelTrainer(dataset)
-trainer.train(EPOCHS)
+trainer.train()
 trainer.save("./models/baseline_model/output")
