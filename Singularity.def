@@ -4,7 +4,6 @@ From: python:3.12.3-slim
 %environment
     # ensure non-interactive installs
     export DEBIAN_FRONTEND=noninteractive
-    export HUGGINGFACE_HUB_TOKEN=
 
 %files
     requirements.txt     /opt/app/requirements.txt
@@ -19,4 +18,4 @@ From: python:3.12.3-slim
     pip install --no-cache-dir -r /opt/app/requirements.txt
 
 %runscript
-    exec python models/baseline.py "$@"
+    exec python models/baseline_model/train.py "$@"
