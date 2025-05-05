@@ -5,13 +5,24 @@ from datasets import load_dataset, Features, Sequence, ClassLabel, Value
 
 path = "data/baseline/en_ewt-ud-train.iob2"
 
+# 'I-ORG', 'I-LOC', 'O', 'I-PER', 'B-LOC', 'B-PER', 'B-ORG'
+label2id = {
+    "O": 0,
+    "B-PER": 1,
+    "I-PER": 2,
+    "B-LOC": 3,
+    "I-LOC": 4,
+    "B-ORG": 5,
+    "I-ORG": 6,
+}
+
+id2label = {value: key for key, value in label2id.items()}
+
+
 labels = set()
 
 
 def read_conll(path: str):
-    """
-    returns (N,2) matrix, where N = number of words in a conll file
-    """
     data = {"tokens": [], "labels": []}
     temp = [[], []]
 
@@ -27,8 +38,8 @@ def read_conll(path: str):
 
         valid = line.split("\t")[1:3]
         temp[0].append(valid[0])
-        temp[1].append(valid[1])
-        labels.add(valid[1])
+        temp[1].append(label2id[valid[1]])
+        labels.add(label2id[valid[1]])
 
     return data
 
@@ -56,9 +67,9 @@ data_files = {
 features = Features(
     {
         "tokens": Sequence(feature=Value("string")),
-        "labels": Sequence(feature=ClassLabel(names=list(labels))),
+        "labels": Sequence(feature=Value("int64")),
     }
 )
 
 dataset = load_dataset("json", data_files=data_files, features=features)
-dataset.push_to_hub("jannahalka/nlp-project-data", private=True)
+dataset.push_to_hub("jannahalka/nlp-project-data")
