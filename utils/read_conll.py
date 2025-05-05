@@ -1,8 +1,8 @@
 from pathlib import Path
+from datasets import load_dataset, Features, Sequence, ClassLabel, Value
 import json
 
-from datasets import load_dataset, Features, Sequence, ClassLabel, Value
-
+# TODO: Refactor this shitshow (whole file)
 path = "data/baseline/en_ewt-ud-train.iob2"
 
 # 'I-ORG', 'I-LOC', 'O', 'I-PER', 'B-LOC', 'B-PER', 'B-ORG'
