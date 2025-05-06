@@ -9,6 +9,15 @@ from torch.utils.data import DataLoader
 import torch
 from tqdm import tqdm
 
+label2id = {
+    "O": 0,
+    "B-PER": 1,
+    "I-PER": 2,
+    "B-LOC": 3,
+    "I-LOC": 4,
+    "B-ORG": 5,
+    "I-ORG": 6,
+}
 
 
 def get_dataset():
@@ -27,7 +36,7 @@ class BaselineModelTrainer:
         model_name="google-bert/bert-base-cased",
         learning_rate=2e-5,
         batch_size=8,
-        epochs=3
+        epochs=3,
     ):
         self.batch_size = batch_size
         self.epochs = epochs
@@ -35,10 +44,8 @@ class BaselineModelTrainer:
         train, dev, test = dataset.values()
         self.train_dataset, self.dev_dataset, self.test_dataset = train, dev, test
 
-        labels: list[str] = train.features["labels"].feature.names
-        labels_size = len(labels)
-
-        config = AutoConfig.from_pretrained(model_name, num_labels=labels_size)
+        labels = label2id.values()
+        config = AutoConfig.from_pretrained(model_name, num_labels=len(labels))
 
         self.model = AutoModelForTokenClassification.from_pretrained(
             model_name, config=config
@@ -132,6 +139,7 @@ class BaselineModelTrainer:
     def save(self, path: str):
         self.model.save_pretrained(path)
         self.tokenizer.save_pretrained(path)
+
 
 dataset = get_dataset()
 

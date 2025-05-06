@@ -5,7 +5,6 @@ import json
 # TODO: Refactor this shitshow (whole file)
 path = "data/baseline/en_ewt-ud-train.iob2"
 
-# 'I-ORG', 'I-LOC', 'O', 'I-PER', 'B-LOC', 'B-PER', 'B-ORG'
 label2id = {
     "O": 0,
     "B-PER": 1,
@@ -70,6 +69,3 @@ features = Features(
         "labels": Sequence(feature=Value("int64")),
     }
 )
-
-dataset = load_dataset("json", data_files=data_files, features=features)
-dataset.push_to_hub("jannahalka/nlp-project-data")
