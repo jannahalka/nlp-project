@@ -1,5 +1,6 @@
 from huggingface_hub import HfApi
 import os
+from .train import label2id
 
 api = HfApi(token=os.getenv("HF_TOKEN"))
 api.upload_folder(
