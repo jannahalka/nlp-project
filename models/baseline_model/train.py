@@ -8,7 +8,6 @@ from datasets import load_dataset, DatasetDict
 from torch.utils.data import DataLoader
 import torch
 from tqdm import tqdm
-from transformers.tokenization_utils_fast import PreTrainedTokenizerFast
 
 label2id = {
     "O": 0,
@@ -51,9 +50,7 @@ class BaselineModelTrainer:
         self.model = AutoModelForTokenClassification.from_pretrained(
             model_name, config=config
         )
-        self.tokenizer: PreTrainedTokenizerFast = AutoTokenizer.from_pretrained(
-            model_name, use_fast=True
-        )
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True)
         self.data_collator = DataCollatorForTokenClassification(self.tokenizer)
 
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -105,26 +102,13 @@ class BaselineModelTrainer:
     def tokenize(self, examples):
         tokenized_inputs = self.tokenizer(
             examples["tokens"],
-            max_length=128,
+            max_length=128,  # Max length of a batch
             padding=False,
             truncation=True,
             is_split_into_words=True,
-            return_offsets_mapping=True,
         )
-        batch_idx = 0
-        toks = self.tokenizer.convert_ids_to_tokens(
-            tokenized_inputs["input_ids"][batch_idx]
-        )
-        wids = tokenized_inputs.word_ids(batch_index=batch_idx)
-        masked = self.create_labels_mask(wids, examples["labels"][batch_idx])
-        labs = examples["labels"][batch_idx]
-
-        print(f"\nTOKENS: {toks}")
-        print(f"WORD_IDS: {wids}")
-        print(f"ORIG_LABS: {labs}")
-        print(f"MASKED  : {masked}\n")
-        # labels = self.align_labels(examples, tokenized_inputs)
-        # tokenized_inputs["labels"] = labels
+        labels = self.align_labels(examples, tokenized_inputs)
+        tokenized_inputs["labels"] = labels
         return tokenized_inputs
 
     def align_labels(self, examples, tokenized_inputs):
@@ -156,85 +140,6 @@ class BaselineModelTrainer:
         self.model.save_pretrained(path)
         self.tokenizer.save_pretrained(path)
 
+    def get_model(self):
+        return self.model
 
-dataset = get_dataset()
-
-trainer = BaselineModelTrainer(dataset)
-
-
-examples = {
-    "tokens": [
-        [
-            "With",
-            "a",
-            "Pizza",
-            "Hut",
-            ",",
-            "IHOP",
-            ",",
-            "3",
-            "Starbucks",
-            ",",
-            "Chili",
-            "s",
-            ",",
-            "Panera",
-            ",",
-            "and",
-            "Chipotle",
-            "on",
-            "campus",
-            "ALONE",
-            ",",
-            "VCU",
-            "has",
-            "some",
-            "of",
-            "the",
-            "best",
-            "eating",
-            "options",
-            "for",
-            "students",
-            ".",
-        ]
-    ],
-    "labels": [
-        [
-            0,
-            0,
-            5,
-            6,
-            0,
-            5,
-            0,
-            0,
-            5,
-            0,
-            5,
-            6,
-            0,
-            5,
-            0,
-            0,
-            5,
-            0,
-            0,
-            0,
-            0,
-            5,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-        ]
-    ],
-}
-
-trainer.tokenize(examples)
