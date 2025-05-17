@@ -60,7 +60,5 @@ class Example:
         self.labels = new_labels
         self.confidences = new_confidences
 
-    def prepare_for_training(self) -> Dataset:
-        self.merge_subwords()
-        self.mask()
+
 

@@ -65,3 +65,7 @@ def test_cannot_construct_bad_dimensions_example(tokens, labels, confidences):
 )
 def test_initialize_example(tokens, labels, confidences):
     Example(tokens, labels, confidences)
+
+
+def test_prepare_for_testing_example():
+    pass

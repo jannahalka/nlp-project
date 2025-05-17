@@ -4,10 +4,12 @@ from .baseline_model.datasets import SilverDataset, UnlabeledDataset
 from .baseline_model.utils import collate_sentences, device
 from .baseline_model.model import get_trained_model, get_trained_tokenizer
 from .baseline_model.example_dataclass import Example
+from transformers import DataCollatorForTokenClassification
 
 torch.manual_seed(42)
 
 BATCH_SIZE = 1  # todo: Change to 64 in prod
+LR = 2e-5
 
 dataloader = DataLoader(
     UnlabeledDataset("./data/sentences.txt"),
@@ -18,7 +20,9 @@ dataloader = DataLoader(
 
 model = get_trained_model()
 tokenizer = get_trained_tokenizer()
+optimizer = torch.optim.AdamW(model.parameters(), lr=LR)
 special_ids = set(tokenizer.all_special_ids)
+collator = DataCollatorForTokenClassification(tokenizer)
 
 silver_data: list[Example] = []
 
@@ -52,5 +56,17 @@ example.merge_subwords()
 example.mask()
 silver_data.append(example)
 
-dataset = SilverDataset(silver_data)
-silver_dataloader = DataLoader(dataset, shuffle=True, batch_size=BATCH_SIZE)
+dataset = SilverDataset(silver_data, tokenizer, max_length=128)
+
+silver_dataloader = DataLoader(
+    dataset, shuffle=True, collate_fn=collator, batch_size=BATCH_SIZE
+)
+silver_batch = next(iter(silver_dataloader))  # change to loop in prod
+model.train()
+
+outputs = model(**silver_batch)
+
+loss = outputs.loss
+loss.backward()
+optimizer.step()
+optimizer.zero_grad()
