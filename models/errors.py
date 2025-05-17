@@ -1,0 +1,2 @@
+class InvalidDimensionException(BaseException):
+    pass
