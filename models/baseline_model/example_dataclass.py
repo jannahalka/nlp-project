@@ -1,5 +1,5 @@
 import torch
-
+from torch.utils.data import Dataset
 from ..errors import InvalidDimensionException
 from typing import List
 from dataclasses import dataclass
@@ -59,4 +59,8 @@ class Example:
         self.tokens = new_tokens
         self.labels = new_labels
         self.confidences = new_confidences
+
+    def prepare_for_training(self) -> Dataset:
+        self.merge_subwords()
+        self.mask()
 

@@ -1,6 +1,6 @@
 import torch
 from torch.utils.data import DataLoader
-from .baseline_model.datasets import UnlabeledDataset
+from .baseline_model.datasets import SilverDataset, UnlabeledDataset
 from .baseline_model.utils import collate_sentences, device
 from .baseline_model.model import get_trained_model, get_trained_tokenizer
 from .baseline_model.example_dataclass import Example
@@ -20,7 +20,9 @@ model = get_trained_model()
 tokenizer = get_trained_tokenizer()
 special_ids = set(tokenizer.all_special_ids)
 
-batch = next(iter(dataloader)) # change to loop in prod
+silver_data: list[Example] = []
+
+batch = next(iter(dataloader))  # change to loop in prod
 batch = {key: value.to(device) for key, value in batch.items()}
 
 outputs = model(**batch)
@@ -48,3 +50,7 @@ for tok_id, tok, idx, conf in zip(token_ids, tokens, pred_indices, confidence_sc
 example = Example(filtered_tokens, filtered_labels, filtered_confidences)
 example.merge_subwords()
 example.mask()
+silver_data.append(example)
+
+dataset = SilverDataset(silver_data)
+silver_dataloader = DataLoader(dataset, shuffle=True, batch_size=BATCH_SIZE)
