@@ -1,30 +1,34 @@
 import torch
-from torch.utils.data import DataLoader
 from .utils import device
 from .model import get_trained_model
 from typing import List
 from dataclasses import dataclass
 
 
+threshold = 0.90
+
+
 @dataclass
 class Example:
-    THRESHOLD = 0.90
     IGNORE_LABEL = -100
 
     tokens: List[str]
     labels: List[int]
-    scores: List[float]
+    confidences: List[float]
 
     def mask(self) -> None:
         """
         Replace any label whose corresponding score is below THRESHOLD with -100.
         """
-        if len(self.labels) != len(self.scores):
+        if len(self.labels) != len(self.confidences):
             raise ValueError("labels and scores must be the same length")
 
-        for idx, score in enumerate(self.scores):
-            if score < self.THRESHOLD:
+        for idx, confidence in enumerate(self.confidences):
+            if confidence < threshold:
                 self.labels[idx] = self.IGNORE_LABEL
+
+    def merge_subwords(self) -> None:
+        pass
 
 
 def get_predictions():
@@ -54,12 +58,12 @@ def create_silver_dataset() -> List[Example]:
         Example(
             tokens=["Yoda", "is", "a", "Jedi", "."],
             labels=[1, 0, 0, 3, 0],
-            scores=[0.88, 0.92, 0.99, 0.90, 0.99],
+            confidences=[0.88, 0.92, 0.99, 0.90, 0.99],
         ),
         Example(
             tokens=["Darth", "Vader", "is", "a" "Sith", "."],
             labels=[1, 2, 0, 0, 3, 0],
-            scores=[0.88, 0.92, 0.99, 0.90, 0.99],
+            confidences=[0.88, 0.92, 0.99, 0.90, 0.99],
         ),
     ]
 
@@ -67,3 +71,10 @@ def create_silver_dataset() -> List[Example]:
 # todo: create_silver_dataset() will return data in the format below
 # Raw sentences: ["Yoda is a Jedi.", "Darth Vader is a Sith."]
 # Output from create_silver_dataset(): [[["Yoda", "is", "a", "Jedi", "."], [1, 0, 0, 3, 0], [0.88, 0.92, 0.99, 0.90, 0.99]], ["Darth", "Vader", "is", "a", "Sith", "."]]
+
+x = Example(
+    tokens=["Darth", "Vader", "is", "a" "Sith", "."],
+    labels=[1, 2, 0, 0, 3, 0],
+    confidences=[0.88, 0.92, 0.99, 0.90, 0.99],
+),
+
