@@ -1,5 +1,5 @@
 import pytest
-from models.baseline_model.predict import Example
+from models.baseline_model.example_dataclass import Example
 from models.errors import InvalidDimensionException
 
 

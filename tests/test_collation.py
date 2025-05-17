@@ -1,5 +1,5 @@
 from transformers.models.auto.tokenization_auto import AutoTokenizer
-from models.baseline_model.predict import collate
+from models.baseline_model.utils import collate_sentences
 
 model_name = "jannahalka/nlp-project-baseline"
 tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True)
@@ -21,7 +21,7 @@ batch_sentences = [
 ]
 
 def test_collate():
-    collated_batch = collate(batch_sentences, tokenizer)
+    collated_batch = collate_sentences(batch_sentences)
     input_ids = collated_batch["input_ids"]
 
     assert len(input_ids) == len(batch_sentences)
