@@ -96,8 +96,8 @@ if __name__ == "__main__":
 
     # Hyper-parameters
     LR = 2e-5
-    PSEUDO_ITERS = 3  # how many times to re-label + train
-    TRAIN_EPOCHS = 2
+    PSEUDO_ITERS = 5  # how many times to re-label + train
+    TRAIN_EPOCHS = 5
     BATCH_SIZE = 64
 
     # ---- Prepare data & model ----
@@ -127,8 +127,4 @@ if __name__ == "__main__":
             epochs=TRAIN_EPOCHS,
         )
 
-    # ---- Save final model ----
-    save_dir = "./models/pseudo_trained"
-    model.save_pretrained(save_dir)
-    tokenizer.save_pretrained(save_dir)
-    logging.info(f"Training complete. Model saved to {save_dir}")
+    logging.info(f"Training complete.")
