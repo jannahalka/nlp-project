@@ -17,7 +17,11 @@ label2id = {
     "I-LOC": 4,
     "B-ORG": 5,
     "I-ORG": 6,
+    "B-MISC": 7,
+    "I-MISC": 8,
 }
+
+id2label = {idx: lab for lab, idx in label2id.items()}
 
 
 def get_dataset():
@@ -44,8 +48,9 @@ class BaselineModelTrainer:
         train, dev, test = dataset.values()
         self.train_dataset, self.dev_dataset, self.test_dataset = train, dev, test
 
-        labels = label2id.values()
-        config = AutoConfig.from_pretrained(model_name, num_labels=len(labels))
+        config = AutoConfig.from_pretrained(
+            model_name, num_labels=len(label2id), label2id=label2id, id2label=id2label
+        )
 
         self.model = AutoModelForTokenClassification.from_pretrained(
             model_name, config=config
@@ -142,4 +147,5 @@ class BaselineModelTrainer:
 
     def get_model(self):
         return self.model
+
 

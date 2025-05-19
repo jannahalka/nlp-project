@@ -1,0 +1,75 @@
+.
+├── __init__.py
+├── __pycache__
+│   ├── __init__.cpython-312.pyc
+│   ├── data.cpython-312.pyc
+│   ├── evaluate_script.cpython-312.pyc
+│   └── tokenize_labels.cpython-312.pyc
+├── annotation.md
+├── data
+│   ├── 0.txt
+│   ├── 1.txt
+│   ├── 2.txt
+│   ├── annotated_data.jsonl
+│   ├── baseline
+│   │   ├── dev.json
+│   │   ├── en_ewt-ud-dev.iob2
+│   │   ├── en_ewt-ud-test-masked.iob2
+│   │   ├── en_ewt-ud-train.iob2
+│   │   ├── test.json
+│   │   └── train.json
+│   ├── sentences.txt
+│   └── unlabeled.txt
+├── evaluate_script.py
+├── gpu.job
+├── models
+│   ├── __init__.py
+│   ├── __pycache__
+│   │   ├── errors.cpython-312.pyc
+│   │   ├── pseudo_labels_script.cpython-312.pyc
+│   │   └── pseudo_labels.cpython-312.pyc
+│   ├── baseline_model
+│   │   ├── __pycache__
+│   │   │   ├── datasets.cpython-312.pyc
+│   │   │   ├── example_dataclass.cpython-312.pyc
+│   │   │   ├── model.cpython-312.pyc
+│   │   │   ├── predict.cpython-312.pyc
+│   │   │   ├── train.cpython-312.pyc
+│   │   │   └── utils.cpython-312.pyc
+│   │   ├── datasets.py
+│   │   ├── example_dataclass.py
+│   │   ├── model.py
+│   │   ├── train.py
+│   │   ├── upload.py
+│   │   └── utils.py
+│   ├── errors.py
+│   └── pseudo_labels_script.py
+├── pseudo_labels.py
+├── README.md
+├── requirements.txt
+├── Singularity.def
+├── tests
+│   ├── __init__.py
+│   ├── __pycache__
+│   │   ├── __init__.cpython-312.pyc
+│   │   ├── test_collation.cpython-312-pytest-8.3.5.pyc
+│   │   ├── test_custom_dataclasses.cpython-312-pytest-8.3.5.pyc
+│   │   ├── test_custom_datasets.cpython-312-pytest-8.3.5.pyc
+│   │   ├── test_handle.cpython-312-pytest-8.3.5.pyc
+│   │   └── test_prediction.cpython-312-pytest-8.3.5.pyc
+│   ├── test_collation.py
+│   ├── test_custom_dataclasses.py
+│   └── test_custom_datasets.py
+├── tree.txt
+└── utils
+    ├── __init__.py
+    ├── __pycache__
+    │   ├── __init__.cpython-312.pyc
+    │   ├── evaluate_model.cpython-312.pyc
+    │   ├── gold_dataset.cpython-312.pyc
+    │   └── read_conll.cpython-312.pyc
+    ├── evaluate_model.py
+    ├── gold_dataset.py
+    └── read_conll.py
+
+12 directories, 61 files
