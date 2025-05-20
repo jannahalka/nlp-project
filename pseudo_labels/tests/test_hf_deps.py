@@ -1,5 +1,6 @@
 # Exploration of Huggingface
 from ..models.baseline_model.model import get_trained_model
+from ..models.baseline_model.train import get_dataset
 
 model = get_trained_model()
 label2id = {
@@ -17,3 +18,9 @@ label2id = {
 
 def test_label2id():
     assert label2id == model.config.label2id
+
+def test_nlp_project_dataset():
+    dataset = get_dataset()
+
+    print(dataset)
+

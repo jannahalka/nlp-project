@@ -8,6 +8,8 @@ from datasets import load_dataset, DatasetDict
 from torch.utils.data import DataLoader
 import torch
 from tqdm import tqdm
+import logging
+
 
 label2id = {
     "O": 0,
@@ -42,6 +44,12 @@ class BaselineModelTrainer:
         batch_size=8,
         epochs=3,
     ):
+        # Logging setup
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s - %(levelname)s - %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
         self.batch_size = batch_size
         self.epochs = epochs
 
@@ -69,7 +77,19 @@ class BaselineModelTrainer:
         for epoch in range(self.epochs):
             self.train_epoch(epoch)
             # TODO: self.test_epoch()
+    def test_epoch(self):
+        self.model.eval()
+        size = len(self.test_loader.dataset)
+        num_batches = len(dataloader)
+        test_loss, correct = 0, 0
 
+
+        with torch.no_grad():
+            for X, y in self.test_loader:
+                pred = self.model(X)
+                test_loss += loss_fn(pred, y).item()
+                correct += (pred.argmax(1) == y).type(torch.float).sum().item()
+    test_loss, correct = 0, 0
     def train_epoch(self, epoch: int):
         self.model.train()
 
@@ -96,9 +116,20 @@ class BaselineModelTrainer:
             remove_columns=self.train_dataset.column_names,
             desc="Running tokenizer on the dataset",
         )
-
+        self.test_dataset = self.test_dataset.map(
+            self.tokenize,
+            batche=True,
+            remove_columns=self.test_dataset.column_names,
+            desc="Running tokenizer on the dataset",
+        )
         self.train_loader = DataLoader(
             self.train_dataset,
+            shuffle=True,
+            collate_fn=self.data_collator,
+            batch_size=self.batch_size,
+        )
+        self.test_loader = DataLoader(
+            self.test_dataset,
             shuffle=True,
             collate_fn=self.data_collator,
             batch_size=self.batch_size,
@@ -147,5 +178,3 @@ class BaselineModelTrainer:
 
     def get_model(self):
         return self.model
-
-

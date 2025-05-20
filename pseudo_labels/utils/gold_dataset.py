@@ -51,7 +51,3 @@ class GoldDataset(Dataset):
         )
 
         return enc, self.data["labels"][index]
-
-
-g = GoldDataset()
-print(g[0])
