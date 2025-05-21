@@ -1,7 +1,7 @@
 import json
 from torch.utils.data import Dataset
 from ..models.baseline_model.model import get_trained_tokenizer
-from ..models.baseline_model.train import label2id
+from .labels import label2id
 
 
 def convert_annotated_data_to_dict():
