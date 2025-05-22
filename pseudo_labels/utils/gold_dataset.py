@@ -4,13 +4,12 @@ from ..models.baseline_model.model import get_trained_tokenizer
 from .labels import label2id
 
 
-def convert_annotated_data_to_dict():
+def convert_annotated_data_to_dict(ds_path: str):
     data = {
         "tokens": [],
         "labels": [],
     }  # todo: convert long type definition to a type of its own
-
-    with open("./pseudo_labels/data/annotated_data.jsonl") as f:
+    with open(ds_path) as f:
         for line in f.readlines():
             example = json.loads(line)
             labels = example["label"]
@@ -33,8 +32,8 @@ def convert_annotated_data_to_dict():
 
 
 class GoldDataset(Dataset):
-    def __init__(self):
-        self.data = convert_annotated_data_to_dict()
+    def __init__(self, ds_path: str):
+        self.data = convert_annotated_data_to_dict(ds_path)
         self.tokenizer = get_trained_tokenizer()
 
     def __len__(self):

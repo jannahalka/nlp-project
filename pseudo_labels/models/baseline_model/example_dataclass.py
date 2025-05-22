@@ -1,17 +1,12 @@
-import torch
-from torch.utils.data import Dataset
-from ..errors import InvalidDimensionException
 from typing import List
 from dataclasses import dataclass
+from ..errors import InvalidDimensionException
 
-
-threshold = 0.90
 
 
 @dataclass
 class Example:
     IGNORE_LABEL = -100
-
     tokens: List[str]
     labels: List[int]
     confidences: List[float]
@@ -25,7 +20,7 @@ class Example:
                 "Dimension of either `confidences` or `labels` don't match with `tokens`"
             )
 
-    def mask(self) -> None:
+    def mask(self, threshold: float) -> None:
         """
         Replace any label whose corresponding score is below THRESHOLD with -100.
         """
@@ -49,7 +44,9 @@ class Example:
             if tok.startswith("##"):
                 clean = tok[2:]
                 if not new_tokens:
-                    raise ValueError("Cannot merge a subword at the beginning of the sequence")
+                    raise ValueError(
+                        "Cannot merge a subword at the beginning of the sequence"
+                    )
                 new_tokens[-1] += clean
             else:
                 new_tokens.append(tok)
@@ -59,6 +56,3 @@ class Example:
         self.tokens = new_tokens
         self.labels = new_labels
         self.confidences = new_confidences
-
-
-
