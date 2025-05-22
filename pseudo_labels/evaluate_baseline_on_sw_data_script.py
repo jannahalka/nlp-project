@@ -10,7 +10,7 @@ tokenizer = get_trained_tokenizer()
 
 model.to(device)
 
-gold_dataset = GoldDataset()
+gold_dataset = GoldDataset("./pseudo_labels/data/gold/annotated_test.jsonl")
 dataloader = DataLoader(
     gold_dataset,
     shuffle=False,
