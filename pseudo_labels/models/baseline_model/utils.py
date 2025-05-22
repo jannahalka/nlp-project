@@ -1,8 +1,4 @@
 from .model import get_trained_tokenizer
-import torch
-
-device = torch.device("cuda" if torch.cuda.is_available() else "mps")
-
 
 def collate_sentences(batch_sentences):
     """

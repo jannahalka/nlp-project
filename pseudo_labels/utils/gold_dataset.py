@@ -42,12 +42,5 @@ class GoldDataset(Dataset):
 
     def __getitem__(self, index):
         tokens = self.data["tokens"][index]
-        enc = self.tokenizer(
-            tokens,
-            max_length=128,
-            padding=False,
-            truncation=True,
-            is_split_into_words=True,
-        )
 
-        return enc, self.data["labels"][index]
+        return {"tokens": tokens, "labels": self.data["labels"][index]}
