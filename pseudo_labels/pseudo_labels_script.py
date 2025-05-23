@@ -79,7 +79,10 @@ class PseudoLabels:
                 batch = {key: value.to(device) for key, value in batch.items()}
                 loss = self.model(**batch).loss
                 if torch.isnan(loss):
-                    print(f"Batch has all labels = -100? ", (batch['labels']==-100).all())
+                    print(
+                        f"Batch has all labels = -100? ",
+                        (batch["labels"] == -100).all(),
+                    )
                     optimizer.zero_grad()
                     continue
 
@@ -126,7 +129,7 @@ if __name__ == "__main__":
         logging.info(f"Generated {n_generated} silver examples")
 
         train_loader = DataLoader(
-            PseudoTrainDataset(silver_data),
+            GoldDataset("./pseudo_labels/data/gold/annotated_train.jsonl"),
             batch_size=64,
             shuffle=True,
             collate_fn=lambda batch: tokenize(batch, pseudo.tokenizer),
